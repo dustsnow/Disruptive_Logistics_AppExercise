@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/my_container"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+	<LinearLayout 
+	    android:id="@+id/map_container"
+	    android:orientation="horizontal"
+	    android:layout_width="match_parent"
+    	android:layout_height="match_parent"
+    	android:focusable="true"
+		android:focusableInTouchMode="true">
+    	<!-- <requestFocus /> -->
+    	<fragment
+	        android:id="@+id/map"
+	        android:layout_width="match_parent"
+	        android:layout_height="match_parent"
+	        class="com.google.android.gms.maps.MapFragment" />
+	</LinearLayout>
+
+	<EditText
+	    android:id="@+id/current"
+	    android:layout_width="fill_parent"
+	    android:layout_height="40dp"
+	    android:layout_centerHorizontal="true"
+	    android:layout_marginLeft="20dp"
+	    android:layout_marginRight="20dp"
+	    android:layout_marginTop="10dp"
+	    android:background="@android:color/white"
+	    android:hint="Current"
+	    android:inputType="textPostalAddress"
+	    android:paddingLeft="50dp" 
+	    android:enabled="false"/>
+
+	<Button
+	    android:id="@+id/button_current"
+	    android:layout_width="40dp"
+	    android:layout_height="40dp"
+	    android:layout_marginLeft="20dp"
+	    android:layout_marginTop="10dp"
+	    android:background="@drawable/a"
+	    android:visibility="invisible" >
+	    
+	    </Button>
+	
+	<EditText
+	    android:id="@+id/destination"
+	    android:layout_width="fill_parent"
+	    android:layout_height="40dp"
+	    android:layout_below="@id/current"
+	    android:layout_centerHorizontal="true"
+	    android:layout_marginLeft="20dp"
+	    android:layout_marginRight="20dp"
+	    android:layout_marginTop="10dp"
+	    android:background="@android:color/white"
+	    android:ems="10"
+	    android:hint="Destination"
+	    android:inputType="textPostalAddress"
+	    android:paddingLeft="50dp" />
+
+	<Button
+	    android:id="@+id/button_destination"
+	    android:layout_width="40dp"
+	    android:layout_height="40dp"
+	    android:layout_marginLeft="20dp"
+	    android:layout_marginTop="60dp"
+	    android:background="@drawable/b"
+	    android:visibility="invisible" />
+
+	<TextView
+	    android:id="@+id/distance"
+	    android:layout_width="fill_parent"
+	    android:layout_height="40dp"
+	    android:layout_below="@id/destination"
+	    android:layout_marginLeft="40dp"
+	    android:layout_marginRight="40dp"
+	    android:layout_marginTop="10dp"
+	    android:background="@android:color/white"
+	    android:paddingLeft="20dp"
+	    android:paddingTop="5dp"
+	    android:text="Distance:"
+	    android:textSize="20sp" 
+	    android:clickable="false"/>
+
+	<ProgressBar
+	    android:id="@+id/address_progress"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_centerHorizontal="true"
+	    android:layout_centerVertical="true"
+	    android:indeterminate="true"
+	    android:visibility="gone" />
+
+	<Button
+	    android:id="@+id/destination_image"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:visibility="invisible" 
+	    android:background="@drawable/a"/>
+
+</RelativeLayout>
