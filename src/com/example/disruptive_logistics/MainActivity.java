@@ -28,15 +28,21 @@ import android.app.FragmentTransaction;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.util.DisplayMetrics;
 import android.util.JsonReader;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnKeyListener;
+import android.view.ViewGroup.LayoutParams;
+import android.view.ViewGroup.MarginLayoutParams;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -70,6 +76,7 @@ public class MainActivity extends Activity implements
 	private Marker currentMarker;
 	private Marker destinationMarker;
 	private Projection proj;
+	private Button destination_image;
 	static final LatLng HAMBURG = new LatLng(53.558, 9.927);
 	private Context gContext;
 	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
@@ -89,6 +96,7 @@ public class MainActivity extends Activity implements
 		destinationPoint = null;
 		destinationMarker = null;
 		gContext = this;
+		destination_image = (Button) findViewById(R.id.destination_image);
 		
 		destination_addr.setOnKeyListener(new OnKeyListener()
 		{
@@ -109,17 +117,20 @@ public class MainActivity extends Activity implements
 			
 			@Override
 			public void onMapClick(LatLng clickLatLng) {
-				//mMap.addMarker(new MarkerOptions().position(clickLatLng).title("Destination"));
 				if(!isMapEmpty()){
 					Log.d("Location","Remove Destination Marker");
 					mMap.clear();
 				}
 				destinationLatLng = clickLatLng;
+				
+
+				
 				Location destinationLocation  = mCurrentLocation;
 				destinationLocation.setLatitude(destinationLatLng.latitude);
 				destinationLocation.setLongitude(destinationLatLng.longitude);
 				new GetRouteTask().execute();
 				new GetDestinationAddressTask(gContext).execute(destinationLocation);
+				
 			}
 		});
 		
@@ -250,6 +261,11 @@ public class MainActivity extends Activity implements
 		}
 		@Override
         protected void onPostExecute(String route) {
+			
+			InputMethodManager imm = (InputMethodManager)getSystemService(
+				      Context.INPUT_METHOD_SERVICE);
+				imm.hideSoftInputFromWindow(destination_addr.getWindowToken(), 0);
+			
 			button_current.setVisibility(View.VISIBLE);
 			button_destination.setVisibility(View.VISIBLE);
 			try {
@@ -258,11 +274,25 @@ public class MainActivity extends Activity implements
 				String dist = mainObject.getJSONArray("routes").getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONObject("distance").getString("text").toString();
 				distance.setText("Distance: "+dist);
  
+				if(!isMapEmpty()){
+					mMap.clear();
+				}
 				currentMarker = mMap.addMarker(new MarkerOptions().position(currentLatLng).title("Current").icon(BitmapDescriptorFactory.fromResource(R.drawable.letter_a)));
 				destinationMarker = mMap.addMarker(new MarkerOptions().position(destinationLatLng).title("Destination"));
 				
+				proj = mMap.getProjection();
+				destinationPoint = proj.toScreenLocation(destinationMarker.getPosition());
+
+//				RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
+//						RelativeLayout.LayoutParams.WRAP_CONTENT, 
+//						RelativeLayout.LayoutParams.WRAP_CONTENT
+//				);
+//				params.setMargins(pxToDp(destinationPoint.x), pxToDp(destinationPoint.y), 0, 0);
+//				destination_image.setVisibility(View.VISIBLE);
+//				destination_image.setLayoutParams(params);
+				
 				determineBounds(currentLatLng,destinationLatLng);
-				mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(cameraBounds,200));
+				mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(cameraBounds,400));
 				
 				Log.d("Location",mainObject.getJSONArray("routes").getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONArray("steps").length()+"");
 
@@ -520,5 +550,11 @@ public class MainActivity extends Activity implements
 		}else{
 			return true;
 		}
+	}
+	
+	public int pxToDp(int px) {
+	    DisplayMetrics displayMetrics = this.getResources().getDisplayMetrics();
+	    int dp = Math.round(px / (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
+	    return dp;
 	}
 }
