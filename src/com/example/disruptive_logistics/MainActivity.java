@@ -1,3 +1,6 @@
+/**
+ * This project duplicate the Disruptive Logistics App Exercise. 
+ */
 package com.example.disruptive_logistics;
 
 import java.io.BufferedReader;
@@ -54,36 +57,37 @@ import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.maps.*;
 import com.google.android.gms.maps.model.*;;
 
+/**
+ * 
+ * 
+ * @author Peng Hou
+ *
+ */
 public class MainActivity extends Activity implements 
 	GooglePlayServicesClient.ConnectionCallbacks,
 	GooglePlayServicesClient.OnConnectionFailedListener
 {
-	private LocationClient mLocationClient;
-	private ProgressBar mActivityIndicator;
-	private Location mCurrentLocation;
-	private LatLng currentLatLng;
-	private LatLng destinationLatLng;
-	private Point destinationPoint;
-	private EditText current_addr;
-	private EditText destination_addr;
-	private Button button_current;
-	private Button button_destination;
-	private String string_destination;
-	private GoogleMap mMap;
-	private MapFragment mMapFragment;
-	private TextView distance;
-	private LatLngBounds cameraBounds;
-	private Marker currentMarker;
-	private Marker destinationMarker;
-	private Projection proj;
-	private Button destination_image;
-	static final LatLng HAMBURG = new LatLng(53.558, 9.927);
-	private Context gContext;
+	private LocationClient mLocationClient;//LocationClient used to get current location
+	private ProgressBar mActivityIndicator;//ProgressBar shows the progress when get current address
+	private Location mCurrentLocation;//store the Location data
+	private LatLng currentLatLng;//current latitute and longtitute
+	private LatLng destinationLatLng;//destination latitute and longtitute
+	private EditText current_addr;//string current address
+	private EditText destination_addr;//string destination address
+	private Button button_current;//icon before current address EditText
+	private Button button_destination;//icon before destination address EditText
+	private GoogleMap mMap;//GoogleMap object
+	private TextView distance;//Textview shows distance of current and destination
+	private LatLngBounds cameraBounds;//bound for map. able to show all markers and route
+	private Marker currentMarker;//marker for current location
+	private Marker destinationMarker;//marker for destination location
+	private Context gContext;//Context of this Activity
 	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		/* Initialization of global variables */
 		mActivityIndicator = (ProgressBar) findViewById(R.id.address_progress);
 	    current_addr = (EditText) findViewById(R.id.current);
 	    destination_addr = (EditText) findViewById(R.id.destination);
@@ -93,11 +97,10 @@ public class MainActivity extends Activity implements
 	    distance = (TextView) findViewById(R.id.distance);
 	    cameraBounds = null;
 		mMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap(); 
-		destinationPoint = null;
 		destinationMarker = null;
 		gContext = this;
-		destination_image = (Button) findViewById(R.id.destination_image);
 		
+		//KeyListener of key "done" for EditText destination_addr
 		destination_addr.setOnKeyListener(new OnKeyListener()
 		{
 			@Override
@@ -105,69 +108,30 @@ public class MainActivity extends Activity implements
 				if (event.getAction()!=KeyEvent.ACTION_DOWN)
 		            return false;
 		        if(keyCode == KeyEvent.KEYCODE_ENTER ){
-		        	string_destination = destination_addr.getText().toString();
-		            Log.d("Location","Destination Addr: "+string_destination);
-		            new GetLocTask().execute(string_destination);
+		        	//When user enter destination address and press done button, find route and distance
+		            new GetLocTask().execute(destination_addr.getText().toString());
 		            return true;
 		        }
 		        return false;
 			}
 		});
+		//MapClickListener to detect click event on the map
 		mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
 			
 			@Override
 			public void onMapClick(LatLng clickLatLng) {
-				if(!isMapEmpty()){
+				if(!isMapEmpty()){//if map is not clean, clear the map
 					Log.d("Location","Remove Destination Marker");
 					mMap.clear();
 				}
 				destinationLatLng = clickLatLng;
-				
-
-				
 				Location destinationLocation  = mCurrentLocation;
 				destinationLocation.setLatitude(destinationLatLng.latitude);
 				destinationLocation.setLongitude(destinationLatLng.longitude);
-				new GetRouteTask().execute();
-				new GetDestinationAddressTask(gContext).execute(destinationLocation);
-				
+				new GetRouteTask().execute();//Get route 
+				new GetDestinationAddressTask(gContext).execute(destinationLocation);//get destination address
 			}
 		});
-		
-//		mMap.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
-//			
-//			@Override
-//			public void onCameraChange(CameraPosition position) {
-//				
-//				if(destinationLatLng != null){
-//					proj = mMap.getProjection();
-//					if(destinationPoint == null){
-//						destinationPoint = proj.toScreenLocation(destinationMarker.getPosition());
-//						Log.d("Location","Point:" + destinationPoint.toString());
-//					}
-////						proj = mMap.getProjection();
-////						//destinationPoint = a.toScreenLocation(destinationLatLng);
-//						LatLng newDestinationLatLng = proj.fromScreenLocation(destinationPoint);
-////						//Log.d("Location","Point:" + destinationPoint.toString());
-////						Log.d("Location","New LatLng: " + newDestinationLatLng.toString());
-////						//destination.remove();
-//						mMap.addMarker(new MarkerOptions().position(newDestinationLatLng).title("Destination"));
-//				}
-//			}
-//		});
-		
-		
-//		GoogleMapOptions options = new GoogleMapOptions();
-//		options.mapType(GoogleMap.MAP_TYPE_NORMAL)
-//			.camera(new CameraPosition(new LatLng(37.7750,122.4183),5,0,(float) 0))
-//	    	.compassEnabled(false)
-//	    	.rotateGesturesEnabled(false)
-//	    	.tiltGesturesEnabled(false);
-//		
-//		mMapFragment = MapFragment.newInstance(options);
-//		FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
-//		fragmentTransaction.add(R.id.map_container,mMapFragment,"map");
-//		fragmentTransaction.commit();
 	}
     @Override
     protected void onStart() {
@@ -196,27 +160,14 @@ public class MainActivity extends Activity implements
 
 	@Override
 	public void onConnected(Bundle arg0) {
-		// TODO Auto-generated method stub
-		mCurrentLocation = mLocationClient.getLastLocation();
-		
+		mCurrentLocation = mLocationClient.getLastLocation();//get the current LatLng
 		currentLatLng = new LatLng(mCurrentLocation.getLatitude(),mCurrentLocation.getLongitude());
-//		GroundOverlayOptions newarkMap = new GroundOverlayOptions()
-//        	.image(BitmapDescriptorFactory.fromResource(R.drawable.a))
-//        	.position(currentLatLng, 8600f, 6500f);
-//		mMap.addGroundOverlay(newarkMap);
-		//Marker current = mMap.addMarker(new MarkerOptions().position(current_latlng).title("Current"));
 		// Move the camera instantly to hamburg with a zoom of 15.
-	    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15));
+	    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15));//Move camera to current location
 		// Zoom in, animating the camera.
-	    mMap.animateCamera(CameraUpdateFactory.zoomTo(10), 2000, null);
-	    
-		//LatLngBounds cameraBound = new LatLngBounds(new LatLng(-44, 113), new LatLng(-10, 154));
-		//LatLngBounds cameraBound = new LatLngBounds(new LatLng(33, -96), new LatLng(39, -84));
-		//mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(cameraBound, 0));
-	    
-		Log.d("Location","Current Location:"+mCurrentLocation.toString());
-		mActivityIndicator.setVisibility(View.VISIBLE);
-		new GetAddressTask(this).execute(mCurrentLocation);
+	    mMap.animateCamera(CameraUpdateFactory.zoomTo(10), 2000, null);//Animate the moving
+		mActivityIndicator.setVisibility(View.VISIBLE);//Show ProgressBar while getting current location
+		new GetAddressTask(this).execute(mCurrentLocation);//get current address from LatLng
 	}
 
 	@Override
@@ -224,6 +175,9 @@ public class MainActivity extends Activity implements
 		// TODO Auto-generated method stub
 		
 	}
+	/*
+	 * AsyncTask of getting route
+	 */
 	@SuppressLint("NewApi")
 	private class GetRouteTask extends AsyncTask<Void, Void, String> {
 		
@@ -235,21 +189,19 @@ public class MainActivity extends Activity implements
 				URL url = new URL("http://maps.googleapis.com/maps/api/directions/json?origin="
 						+currentLatLng.latitude+","+currentLatLng.longitude
 						+"&destination="+destinationLatLng.latitude+","+destinationLatLng.longitude
-						+"&sensor=true");
-				Log.d("Location",url.toString());
-				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+						+"&sensor=true");//Construct Google Map direction API
+				HttpURLConnection conn = (HttpURLConnection) url.openConnection();//HTTPConnection Object
 				conn.setReadTimeout(10000 /* milliseconds */);
                 conn.setConnectTimeout(15000 /* milliseconds */);
                 conn.setRequestMethod("GET");
                 conn.setDoInput(true);
                 // Starts the query
                 conn.connect();
-                int response = conn.getResponseCode();
-                Log.d("Location", "The response is: " + response);
                 InputStream is = conn.getInputStream();
                 BufferedReader buff_reader = new BufferedReader(new InputStreamReader(is));
                 StringBuilder sb = new StringBuilder();
                 String line = null;
+                //transfer inputstream to a string
                 while ((line = buff_reader.readLine()) != null) {
                     sb.append(line);
                 }
@@ -261,44 +213,32 @@ public class MainActivity extends Activity implements
 		}
 		@Override
         protected void onPostExecute(String route) {
-			
+			//hide keyboard 
 			InputMethodManager imm = (InputMethodManager)getSystemService(
 				      Context.INPUT_METHOD_SERVICE);
-				imm.hideSoftInputFromWindow(destination_addr.getWindowToken(), 0);
+			imm.hideSoftInputFromWindow(destination_addr.getWindowToken(), 0);
 			
-			button_current.setVisibility(View.VISIBLE);
-			button_destination.setVisibility(View.VISIBLE);
+			button_current.setVisibility(View.VISIBLE);//show icon before current address
+			button_destination.setVisibility(View.VISIBLE);//show icon before destination address
 			try {
 				JSONObject mainObject = new JSONObject(route);
-				Log.d("Location",mainObject.getJSONArray("routes").getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONObject("distance").getString("text").toString());
+				//get distance from JSON result
 				String dist = mainObject.getJSONArray("routes").getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONObject("distance").getString("text").toString();
 				distance.setText("Distance: "+dist);
- 
+				//clear map
 				if(!isMapEmpty()){
 					mMap.clear();
 				}
+				//add markers
 				currentMarker = mMap.addMarker(new MarkerOptions().position(currentLatLng).title("Current").icon(BitmapDescriptorFactory.fromResource(R.drawable.letter_a)));
 				destinationMarker = mMap.addMarker(new MarkerOptions().position(destinationLatLng).title("Destination"));
-				
-				proj = mMap.getProjection();
-				destinationPoint = proj.toScreenLocation(destinationMarker.getPosition());
-
-//				RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
-//						RelativeLayout.LayoutParams.WRAP_CONTENT, 
-//						RelativeLayout.LayoutParams.WRAP_CONTENT
-//				);
-//				params.setMargins(pxToDp(destinationPoint.x), pxToDp(destinationPoint.y), 0, 0);
-//				destination_image.setVisibility(View.VISIBLE);
-//				destination_image.setLayoutParams(params);
-				
+				//determine camera bounds from current and destination LatLng
 				determineBounds(currentLatLng,destinationLatLng);
 				mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(cameraBounds,400));
-				
-				Log.d("Location",mainObject.getJSONArray("routes").getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONArray("steps").length()+"");
 
+				//draw route
 				for(int i = 0; i < mainObject.getJSONArray("routes").getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONArray("steps").length(); i++){
-					//Log.d("Location",mainObject.getJSONArray("routes").getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONArray("steps").getJSONObject(i).getJSONObject("start_location").getDouble("lat")+"");
-					//Log.d("Location",mainObject.getJSONArray("routes").getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONArray("steps").getJSONObject(i).getJSONObject("start_location").getDouble("lng")+"");
+					//for every step get start and stop LatLng, draw the step
 					double step_start_lat = mainObject.getJSONArray("routes").getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONArray("steps").getJSONObject(i).getJSONObject("start_location").getDouble("lat");
 					double step_start_lng = mainObject.getJSONArray("routes").getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONArray("steps").getJSONObject(i).getJSONObject("start_location").getDouble("lng");
 					LatLng step_start = new LatLng(step_start_lat,step_start_lng);
@@ -331,8 +271,6 @@ public class MainActivity extends Activity implements
 			try {
 				addr = addr.replaceAll(",?\\ +","+");//Regular Expression to replace whitespace with plus(+) sign that the google likes
 				URL url = new URL("http://maps.googleapis.com/maps/api/geocode/json?address="+addr+"&sensor=true");
-				//URL url = new URL("http://maps.googleapis.com/maps/api/geocode/json?address=591+10th+St+NW+Atlanta+GA+30318&sensor=true");
-				//URL url = new URL("http://www.penghou.net/huayang-codeigniter/index.php/order/allproduct/orderid/92/format/json");
 				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 				conn.setReadTimeout(10000 /* milliseconds */);
                 conn.setConnectTimeout(15000 /* milliseconds */);
@@ -375,15 +313,6 @@ public class MainActivity extends Activity implements
 			mContext = context;
 		}
 
-		/**
-		 * Get a Geocoder instance, get the latitude and longitude
-		 * look up the address, and return it
-		 *
-		 * @params params One or more Location objects
-		 * @return A string containing the address of the current
-		 * location, or an empty string if no address can be found,
-		 * or an error message
-		 */
 		@Override
 		protected String doInBackground(Location... params) {
 		    Geocoder geocoder = new Geocoder(mContext, Locale.getDefault());
@@ -392,9 +321,6 @@ public class MainActivity extends Activity implements
 		    // Create a list to contain the result address
 		    List<Address> addresses = null;
 		    try {
-		        /*
-		         * Return 1 address.
-		         */
 		        addresses = geocoder.getFromLocation(loc.getLatitude(),loc.getLongitude(), 1);
 		        
 		    } catch (IOException e1) {
@@ -465,9 +391,6 @@ public class MainActivity extends Activity implements
 		    // Create a list to contain the result address
 		    List<Address> addresses = null;
 		    try {
-		        /*
-		         * Return 1 address.
-		         */
 		        addresses = geocoder.getFromLocation(loc.getLatitude(),loc.getLongitude(), 1);
 		        
 		    } catch (IOException e1) {
@@ -513,6 +436,10 @@ public class MainActivity extends Activity implements
             current_addr.setText(address);
         }
 	}
+	
+	/*
+	 * setup Map object if it's null
+	 */
 	@SuppressLint("NewApi")
 	private void setMap(){
 		if(mMap == null){
@@ -520,21 +447,20 @@ public class MainActivity extends Activity implements
 		}
 	}
 	
+	/*
+	 * Determine camera bounds. 
+	 * camera bound consist of southeast and northwest point
+	 */
 	private void determineBounds(LatLng a, LatLng b){
 		if(a.longitude < b.longitude && a.latitude < b.latitude){//a: lower-left. b: upper-right
-			Log.d("Location","Bounds Case 1");
 			cameraBounds = new LatLngBounds(a,b);
-		}else if(a.longitude > b.longitude && a.latitude > b.latitude){
-			Log.d("Location","Bounds Case 2");
+		}else if(a.longitude > b.longitude && a.latitude > b.latitude){//a: upper-right. b: lower-left
 			cameraBounds = new LatLngBounds(b,a);
 		}else if(a.longitude < b.longitude && a.latitude > b.latitude){//a: upper-left. b: lower-right
-			Log.d("Location","Bounds Case 3");
 			cameraBounds = new LatLngBounds(new LatLng(b.latitude,a.longitude), new LatLng(a.latitude,b.longitude));
 		}else if(a.longitude > b.longitude && a.latitude < b.latitude){//a: lower-right. b: upper-left
-			Log.d("Location","Bounds Case 4");
 			cameraBounds = new LatLngBounds(new LatLng(a.latitude,b.longitude), new LatLng(b.latitude,a.longitude));
 		}else{
-			Log.d("Location","Bounds Case 5");
 		}
 	}
 	
